@@ -25,6 +25,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'default-profile.png'
     },
+    isBanned: {
+        type: Boolean,
+        default: false
+    },
+    banExpiresAt: {
+        type: Date,
+        default: null // null = not banned or permanent ban
+    },
     bio: {
       type: String,
       default: ''
