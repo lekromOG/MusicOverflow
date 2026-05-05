@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { createUser, getUser } = require('../controllers/userController');
+const { loginUser } = require('../controllers/loginController');
+const isAdmin = require('../middleware/isAdmin');
+const authMiddleware = require('../middleware/authMiddleware');
 const User = require('../models/user');
 
 router.post('/register', createUser);
-
+router.post('/login', loginUser);
 router.get('/:id', getUser);
 
 router.get('/', async (req, res) => {
