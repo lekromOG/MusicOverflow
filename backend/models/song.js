@@ -20,6 +20,10 @@ const songSchema = new mongoose.Schema(
       type: String,
       default: 'default-cover.png'
     },
+    coverArtId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
     duration: {
       type: Number, // in seconds
       required: true
