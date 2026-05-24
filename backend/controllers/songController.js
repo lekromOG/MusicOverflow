@@ -155,4 +155,59 @@ const streamCover = async (req, res) => {
     }
 };
 
-module.exports = { getSongs, getSongById, streamSong, uploadSong, streamCover };
+const incrementPlay = async (req, res) => {
+    try {
+        await Song.findByIdAndUpdate(req.params.id, { $inc: { plays: 1 } });
+        res.status(204).end();
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteSong = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin only' });
+
+        const song = await Song.findById(req.params.id);
+        if (!song) return res.status(404).json({ message: 'Song not found' });
+
+        const { GridFSBucket } = mongoose.mongo;
+        const bucket = new GridFSBucket(mongoose.connection.db);
+
+        if (song.audioFileId) {
+            try { await bucket.delete(song.audioFileId); } catch { /* already gone */ }
+        }
+        if (song.coverArtId) {
+            try { await bucket.delete(song.coverArtId); } catch { /* already gone */ }
+        }
+
+        const Comment = require('../models/comment');
+        await Comment.deleteMany({ song: song._id });
+
+        await song.deleteOne();
+
+        res.status(200).json({ message: 'Song deleted' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const toggleLike = async (req, res) => {
+    try {
+        const song = await Song.findById(req.params.id);
+        if (!song || !song.isPublic) return res.status(404).json({ message: 'Song not found' });
+
+        const userId = req.user._id.toString();
+        const idx = song.likes.findIndex(id => id.toString() === userId);
+
+        if (idx === -1) song.likes.push(req.user._id);
+        else song.likes.splice(idx, 1);
+
+        await song.save();
+        res.json({ likes: song.likes.length, isLiked: idx === -1 });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getSongs, getSongById, streamSong, uploadSong, streamCover, incrementPlay, toggleLike, deleteSong };

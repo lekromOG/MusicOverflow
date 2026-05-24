@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
-const { getSongs, getSongById, streamSong, uploadSong, streamCover } = require('../controllers/songController');
+const { getSongs, getSongById, streamSong, uploadSong, streamCover, incrementPlay, toggleLike, deleteSong } = require('../controllers/songController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const ALLOWED_AUDIO_TYPES = new Set([
@@ -45,6 +45,9 @@ router.post('/upload', authMiddleware, upload.fields([
     { name: 'audio', maxCount: 1 },
     { name: 'cover', maxCount: 1 },
 ]), uploadSong);
+router.post('/:id/play', incrementPlay);
+router.post('/:id/like', authMiddleware, toggleLike);
+router.delete('/:id', authMiddleware, deleteSong);
 router.get('/:id/cover', streamCover);
 router.get('/:id/stream', streamSong);
 router.get('/:id', getSongById);

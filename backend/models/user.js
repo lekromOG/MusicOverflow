@@ -25,6 +25,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'default-profile.png'
     },
+    profilePictureId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null
+    },
+    bannerImageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null
+    },
+    reposts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Song'
+      }
+    ],
     isBanned: {
         type: Boolean,
         default: false

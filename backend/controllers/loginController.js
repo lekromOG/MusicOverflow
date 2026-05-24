@@ -34,10 +34,11 @@ const loginUser = async (req, res) => {
         res.status(200).json({
             token,
             user: {
-                id: user._id,
+                _id: user._id,
                 username: user.username,
                 email: user.email,
                 profilePicture: user.profilePicture,
+                profilePictureId: user.profilePictureId ?? null,
                 isAdmin: user.isAdmin,
                 isPremium: user.isPremium
             }
