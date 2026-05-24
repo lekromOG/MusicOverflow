@@ -45,6 +45,14 @@ function getVolumeIcon(v) {
     return 'bi-volume-up-fill';
 }
 
+const REPORT_REASONS = [
+    'Spam or misleading',
+    'Inappropriate content',
+    'Copyright infringement',
+    'Harassment or hate speech',
+    'Other',
+];
+
 function AvatarImg({ src, alt, className, fallbackSize = 18 }) {
     const [failed, setFailed] = useState(false);
     return failed ? (
@@ -85,6 +93,11 @@ export default function SongPage() {
     const [commentText, setCommentText]     = useState('');
     const [submitting, setSubmitting]       = useState(false);
     const [commentError, setCommentError]   = useState(null);
+
+    const [reportModal, setReportModal]         = useState(null);
+    const [reportReason, setReportReason]       = useState('');
+    const [reportSubmitting, setReportSubmitting] = useState(false);
+    const [reportedIds, setReportedIds]         = useState(new Set());
 
     const navItems = loggedInUser?.isAdmin
         ? [...NAV_ITEMS, { id: 'admin', icon: 'bi-shield-fill-check', label: 'Admin' }]
@@ -210,6 +223,30 @@ export default function SongPage() {
         }
     };
 
+    const openReportModal = (targetType, targetId, label) => {
+        setReportModal({ targetType, targetId, label });
+        setReportReason('');
+    };
+
+    const handleReport = async () => {
+        if (!reportReason || reportSubmitting) return;
+        setReportSubmitting(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE}/reports`, {
+                targetType: reportModal.targetType,
+                targetId:   reportModal.targetId,
+                reason:     reportReason,
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            setReportedIds(prev => new Set([...prev, reportModal.targetId]));
+            setReportModal(null);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to submit report');
+        } finally {
+            setReportSubmitting(false);
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -232,6 +269,7 @@ export default function SongPage() {
                         className={`nav-item${item.id === 'library' ? ' active' : ''}`}
                         onClick={() => {
                             if (item.id === 'home') navigate('/');
+                            else if (item.id === 'admin') navigate('/admin');
                             else if (item.id === 'profile') {
                                 if (loggedInUserId) navigate(`/profile/${loggedInUserId}`);
                                 else navigate('/login');
@@ -378,6 +416,17 @@ export default function SongPage() {
                                     {deleteConfirm ? 'Confirm Delete' : 'Delete Song'}
                                 </button>
                             )}
+                            {loggedInUser && !loggedInUser.isAdmin && (
+                                <button
+                                    className={`song-report-btn${reportedIds.has(song._id) ? ' reported' : ''}`}
+                                    onClick={() => !reportedIds.has(song._id) && openReportModal('song', song._id, song.title)}
+                                    disabled={reportedIds.has(song._id)}
+                                    title="Report this song"
+                                >
+                                    <i className="bi bi-flag-fill" />
+                                    {reportedIds.has(song._id) ? 'Reported' : 'Report'}
+                                </button>
+                            )}
                         </div>
 
                         {streamError && (
@@ -480,6 +529,16 @@ export default function SongPage() {
                                                 <i className="bi bi-trash3" />
                                             </button>
                                         )}
+                                        {loggedInUser && !loggedInUser.isAdmin && !isOwnComment && (
+                                            <button
+                                                className={`comment-report-btn${reportedIds.has(comment._id) ? ' reported' : ''}`}
+                                                onClick={() => !reportedIds.has(comment._id) && openReportModal('comment', comment._id, `${comment.author.username}'s comment`)}
+                                                disabled={reportedIds.has(comment._id)}
+                                                title={reportedIds.has(comment._id) ? 'Already reported' : 'Report comment'}
+                                            >
+                                                <i className="bi bi-flag" />
+                                            </button>
+                                        )}
                                     </div>
                                 );
                             })
@@ -487,6 +546,58 @@ export default function SongPage() {
                     </div>
                 </div>
             </main>
+
+            {/* Report modal */}
+            {reportModal && (
+                <div className="report-modal-overlay" onClick={() => !reportSubmitting && setReportModal(null)}>
+                    <div className="report-modal" onClick={e => e.stopPropagation()}>
+                        <div className="report-modal-header">
+                            <i className="bi bi-flag-fill" />
+                            <span>Report</span>
+                            <button className="report-modal-close" onClick={() => !reportSubmitting && setReportModal(null)}>
+                                <i className="bi bi-x" />
+                            </button>
+                        </div>
+                        <p className="report-modal-subtitle">{reportModal.label}</p>
+                        <div className="report-reasons">
+                            {REPORT_REASONS.map(reason => (
+                                <label
+                                    key={reason}
+                                    className={`report-reason${reportReason === reason ? ' selected' : ''}`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="reportReason"
+                                        value={reason}
+                                        checked={reportReason === reason}
+                                        onChange={() => setReportReason(reason)}
+                                    />
+                                    {reason}
+                                </label>
+                            ))}
+                        </div>
+                        <div className="report-modal-actions">
+                            <button
+                                className="report-cancel-btn"
+                                onClick={() => !reportSubmitting && setReportModal(null)}
+                                disabled={reportSubmitting}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="report-submit-btn"
+                                onClick={handleReport}
+                                disabled={!reportReason || reportSubmitting}
+                            >
+                                {reportSubmitting
+                                    ? <i className="bi bi-arrow-repeat song-spin" style={{ fontSize: 13 }} />
+                                    : 'Submit Report'
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Player bar — appears once user hits Play */}
             {playerStarted && (

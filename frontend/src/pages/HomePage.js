@@ -101,8 +101,10 @@ export default function HomePage() {
     const avatarRef = useRef(null);
 
     const [activeView, setActiveView] = useState('home');
-    const [songs, setSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [songs, setSongs] = useState(() => {
+        try { return JSON.parse(sessionStorage.getItem('mo_songs_cache') || '[]'); } catch { return []; }
+    });
+    const [loading, setLoading] = useState(() => !sessionStorage.getItem('mo_songs_cache'));
 
     const [currentSong, setCurrentSong] = useState(null);
     const [currentTime, setCurrentTime] = useState(0);
@@ -303,11 +305,14 @@ export default function HomePage() {
         if (audioRef.current) audioRef.current.loop = isLoop;
     }, [isLoop]);
 
-    // Fetch songs
+    // Fetch songs — always refresh in background; cache makes it instant on remount
     useEffect(() => {
         axios.get('http://localhost:5000/api/songs')
-            .then(res => setSongs(res.data))
-            .catch(() => setSongs([]))
+            .then(res => {
+                setSongs(res.data);
+                try { sessionStorage.setItem('mo_songs_cache', JSON.stringify(res.data)); } catch { /* ignore */ }
+            })
+            .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
 
@@ -354,6 +359,8 @@ export default function HomePage() {
                                 if (item.id === 'profile') {
                                     if (user) navigate(`/profile/${user._id || user.id}`);
                                     else navigate('/login');
+                                } else if (item.id === 'admin') {
+                                    navigate('/admin');
                                 } else {
                                     setActiveView(item.id);
                                 }
@@ -439,8 +446,7 @@ export default function HomePage() {
             </header>
 
             <main className="main-window">
-                {activeView === 'home' && (
-                    <div className="view-home">
+                <div className="view-home" style={{ display: activeView === 'home' ? '' : 'none' }}>
                         <h2 className="view-greeting">
                             {getGreeting()}{isLoggedIn ? `, ${user.username}` : ''}
                         </h2>
@@ -471,16 +477,13 @@ export default function HomePage() {
                                 />
                             </div>
                         </section>
-                    </div>
-                )}
+                </div>
 
-                {activeView !== 'home' && (
-                    <div className="view-placeholder">
-                        <i className={`bi ${navItems.find(n => n.id === activeView)?.icon}`} />
-                        <h2>{navItems.find(n => n.id === activeView)?.label}</h2>
-                        <p>Coming soon</p>
-                    </div>
-                )}
+                <div className="view-placeholder" style={{ display: activeView !== 'home' ? '' : 'none' }}>
+                    <i className={`bi ${navItems.find(n => n.id === activeView)?.icon || ''}`} />
+                    <h2>{navItems.find(n => n.id === activeView)?.label || ''}</h2>
+                    <p>Coming soon</p>
+                </div>
             </main>
 
             {currentSong && (

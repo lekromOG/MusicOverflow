@@ -411,6 +411,7 @@ export default function ProfilePage() {
                             className={`nav-item ${item.id === 'profile' ? 'active' : ''}`}
                             onClick={() => {
                                 if (item.id === 'home') navigate('/');
+                                else if (item.id === 'admin') navigate('/admin');
                                 else if (item.id === 'profile') {
                                     const uid = loggedInUser?._id || loggedInUser?.id || id;
                                     navigate(`/profile/${uid}`);

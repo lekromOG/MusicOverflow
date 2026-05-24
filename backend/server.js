@@ -9,6 +9,8 @@ const userRoutes = require('./routes/userRoutes');
 const songRoutes = require('./routes/songRoutes');
 const playlistRoutes = require('./routes/playlistRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const adminRoutes   = require('./routes/adminRoutes');
+const reportRoutes  = require('./routes/reportRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -25,6 +27,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/admin',   adminRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.listen(PORT, () => {
  console.log(`Server running on port ${PORT}`);

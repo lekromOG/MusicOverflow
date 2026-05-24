@@ -4,6 +4,7 @@ import UsersDashboard from './pages/UsersDashboard';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import SongPage from './pages/SongPage';
+import AdminPage from './pages/AdminPage';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/users" element={<UsersDashboard />} />
         <Route path="/profile/:id" element={<ProfilePage />} />
         <Route path="/song/:id" element={<SongPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

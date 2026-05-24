@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Szymon\\\\Desktop\\\\VS code\\\\projekt_inzynierski\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(git rm *)",
+      "Bash(git add *)"
     ]
   }
 }
